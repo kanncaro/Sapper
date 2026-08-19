@@ -108,7 +108,7 @@ namespace saper1
                 FontSize = fontSize
             };
 
-           _cells = [.. _gridBuilder.BuildGrid(options)];
+           _gridBuilder.BuildGrid(options);
 
            _cells.ForEach(cell =>
            {

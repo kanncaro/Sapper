@@ -1,4 +1,5 @@
 ﻿using saper1.Entities;
+using saper1.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,6 @@ namespace saper1.IServices
 {
     public interface IGridBuilder
     {
-        void BuildGrid(Grid targetGrid, int gridSize, Style cellStyle, Style flaggedStyle, Brush textColor, float fontSize, List<Cell> cells);
+        void BuildGrid(GridBuilderOptions<Cell> options);
     }
 }

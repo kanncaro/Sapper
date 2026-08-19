@@ -11,16 +11,9 @@ using System.Windows.Media;
 
 namespace saper1.Services
 {
-    public class GameLogicController : IGameLogicController
+    public class GameLogicController(IThemeManager themeManager) : IGameLogicController
     {
-        private readonly Brush _openedCellBrush;
-
-        public GameLogicController(Brush openedCellBrush)
-        {
-            _openedCellBrush = openedCellBrush;
-        }
-
-        public bool CheckWin(int gridSquare, int mineCount, int visited) => (gridSquare - visited) == mineCount;
+        private readonly IThemeManager _themeManager = themeManager;
 
         public void RevealAllMines(List<Cell> mineMap)
         {
@@ -28,7 +21,7 @@ namespace saper1.Services
             {
                 if (cell.Border.Child is TextBlock t)
                 {
-                    cell.Border.Background = _openedCellBrush;
+                    cell.Border.Background = _themeManager.OpenedCellBrush;
                     t.Visibility = Visibility.Visible;
                 }
             });

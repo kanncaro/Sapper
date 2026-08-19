@@ -12,7 +12,7 @@ namespace saper1.Services
     {
         public void CountAllMines(int gridSize, List<Cell> _cells)
         {
-            var mineCells = _cells.Where(c => c.IsMine).ToList();
+            var mineCells = _cells.Where(c => c.IsMine).ToList() ?? [];
 
             foreach (var mine in mineCells)
             {

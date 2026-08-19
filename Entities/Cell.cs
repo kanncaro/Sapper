@@ -9,10 +9,10 @@ using System.Windows.Controls;
 
 namespace saper1.Entities
 {
-    public class Cell
+    public class Cell(Coordinates? coordinates)
     {
-        public Coordinates? Coordinates { get; private set; }
-       
+        public Coordinates? Coordinates { get; private set; } = coordinates;
+
         public Border Border { get; set; } = new();
 
         public bool IsMine { get; set; } = false;
@@ -21,9 +21,16 @@ namespace saper1.Entities
         
         public int AdjacentMines { get; set; } = 0;
 
-        public Cell(Coordinates? coordinates)
+        public static bool operator ==(Cell? left, Cell? right)
         {
-            Coordinates = coordinates;
+            if (left is null && right is null) return true;
+            if (left is null || right is null) return false;
+            return left.Coordinates == right.Coordinates;
+        }
+
+        public static bool operator !=(Cell? left, Cell? right)
+        {
+            return !(left == right);
         }
     }
 }

@@ -26,7 +26,6 @@ namespace saper1
 
         private int _gridSize;
         private int GridSquare => _gridSize * _gridSize;
-        private int _mineProbability;
         private int _minesNeeded;
 
         private readonly Dictionary<string, int[]> difficultyConfig = new()
@@ -36,24 +35,31 @@ namespace saper1
             { "Професіонал", new int[]{ 20, 60 } }
         };
         
-        private List<Cell> _cells = [];
-        private List<Cell> _mineMap;
+        private List<Cell> _cells = new List<Cell>();
+        private List<Cell> _mineMap = new List<Cell>();
 
         private bool _isSettingsPanelOpen = false;
 
-        public MainWindow()
+        public MainWindow(ISettingsService settingsService,
+            IThemeManager themeManager,
+            IGameTimer gameTimer,
+            IMinePlacer minePlacer,
+            IMineCounter mineCounter,
+            IGridBuilder gridBuilder,
+            IGameLogicController gameLogic)
         {
             InitializeComponent();
 
-            _settingsService = new SettingsService();
-            _themeManager = new ThemeManager();
-            _gameTimer = new GameTimer();
-            _minePlacer = new MinePlacer();
-            _mineCounter = new MineCounter();
-            _gridBuilder = new GridBuilder();
-            _gameLogic = new GameLogicController(_themeManager.OpenedCellBrush);
+            _settingsService = settingsService;
+            _themeManager = themeManager;
+            _gameTimer = gameTimer;
+            _minePlacer = minePlacer;
+            _mineCounter = mineCounter;
+            _gridBuilder = gridBuilder;
+            _gameLogic = gameLogic;
 
-            _mineMap = _cells.Where(c => c.IsMine).ToList();
+            _cells = [];
+            _mineMap = [];
 
             _settingsService.Load();
             ApplySettings();
@@ -82,26 +88,33 @@ namespace saper1
                 .FirstOrDefault(item => item.Content.ToString() == _settingsService.SettingsData.Theme);
             
             _themeManager.ApplyTheme(_settingsService.SettingsData.Theme, Resources);
+
+            foreach (var c in _cells.Where(x => x.IsOpen))
+            {
+                c.Border.Background = _themeManager.OpenedCellBrush;
+            }
         }
 
         private void BuildGrid()
         {
             float fontSize = (float)Math.Max(12, 500.0 / _gridSize * 0.4);
 
-            _gridBuilder.BuildGrid(
-                playField,
-                _gridSize,
-                (Style)FindResource("Playfield"),
-                (Style)FindResource("selectedSquare"),
-                (Brush)FindResource("TextForeground"),
-                fontSize,
-                _cells);
+            GridBuilderOptions<Cell> options = new(playField, _cells)
+            {
+                GridSize = _gridSize,
+                CellStyle = (Style)FindResource("Playfield"),
+                FlaggedStyle = (Style)FindResource("selectedSquare"),
+                TextColor = (Brush)FindResource("TextForeground"),
+                FontSize = fontSize
+            };
 
-               _cells.ForEach(cell =>
-               {
-                   cell.Border.MouseLeftButtonDown += Cell_LeftClick;
-                   cell.Border.MouseRightButtonDown += Cell_RightClick;
-               });
+           _cells = [.. _gridBuilder.BuildGrid(options)];
+
+           _cells.ForEach(cell =>
+           {
+               cell.Border.MouseLeftButtonDown += Cell_LeftClick;
+               cell.Border.MouseRightButtonDown += Cell_RightClick;
+           });
         }
         
         private bool _gameStarted;
@@ -117,6 +130,7 @@ namespace saper1
             if (!_gameStarted)
             {
                 _minePlacer.PlaceMines(_gridSize, _minesNeeded, row, col, _cells);
+                _mineMap = [.. _cells.Where(c => c.IsMine)];
                 _mineCounter.CountAllMines(_gridSize, _cells);
                 _gameTimer.Reset();
                 _gameTimer.Start();
@@ -145,7 +159,8 @@ namespace saper1
             else
             {
                 RevealRecursive(row, col);
-                if (_gameLogic.CheckWin(GridSquare, _mineMap.Count, _cells.Where(x => x.IsOpen).ToList().Count))
+
+                if ( (GridSquare - _mineMap.Count) == _cells.Where(x => x.IsFlagged || x.IsOpen).Count())
                 {
                     _gameTimer.Stop();
                     MessageBox.Show("You win!");
@@ -223,7 +238,7 @@ namespace saper1
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             if (!_gameStarted) return;
-            if (MessageBox.Show("Точно?", "Caution", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (MessageBox.Show("Refresh game?", "Caution", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 Refresh();
         }
 
@@ -265,11 +280,12 @@ namespace saper1
                 _settingsService.Save(
                                 new()
                                 {
-                                  Difficulty = (difficultyComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!,
-                                  Theme = (themeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!
+                                    Difficulty = (difficultyComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!,
+                                    Theme = (themeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!
                                 });
 
                 ApplySettings();
+                Refresh();
                 CloseSettingsButton_Click(sender, e);
             }
             catch (Exception ex)

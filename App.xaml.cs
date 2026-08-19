@@ -1,6 +1,9 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using saper1.IServices;
+using saper1.Services;
 
 namespace saper1
 {
@@ -12,29 +15,29 @@ namespace saper1
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            ApplyTheme("Dark"); 
-        }
 
-        public void ApplyTheme(string themeName)
-        {
-            ResourceDictionary newTheme = new ResourceDictionary();
+            var services = new ServiceCollection();
 
-            Application.Current.Resources.MergedDictionaries.Clear();
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<IThemeManager, ThemeManager>();
+            services.AddSingleton<IGameTimer, GameTimer>();
+            services.AddSingleton<IMinePlacer, MinePlacer>();
+            services.AddSingleton<IMineCounter, MineCounter>();
+            services.AddSingleton<IGridBuilder, GridBuilder>();
+            services.AddSingleton<IGameLogicController, GameLogicController>();
 
-            if (themeName == "Темна" || themeName == "Dark")
-            {
-                newTheme.Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative);
-            }
-            else if (themeName == "Світла" || themeName == "Light")
-            {
-                newTheme.Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative);
-            }
-            else
-            {
-                newTheme.Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative);
-            }
+            services.AddTransient<MainWindow>();
 
-            Application.Current.Resources.MergedDictionaries.Add(newTheme);
+            var provider = services.BuildServiceProvider();
+
+            var settings = provider.GetRequiredService<ISettingsService>();
+            settings.Load();
+
+            var themeManager = provider.GetRequiredService<IThemeManager>();
+            themeManager.ApplyTheme(settings.SettingsData.Theme, Resources);
+
+            var main = provider.GetRequiredService<MainWindow>();
+            main.Show();
         }
     }
 

@@ -12,10 +12,30 @@ using System.Windows.Media;
 
 namespace saper1.Services
 {
+
+    public class GridBuilderOptions<T>(Grid target, ICollection<T> content)
+    { 
+        public Grid TargetGrid { get; } = target;
+        public ICollection<T> Content { get; } = content;
+
+
+        public int GridSize { get; set; } = 10;
+        public Style CellStyle { get; set; } = null!;
+        public Style FlaggedStyle { get; set; } = null!;
+        public Brush TextColor { get; set; } = Brushes.Black;
+        public float FontSize { get; set; } = 12f;
+    }
+
     public class GridBuilder : IGridBuilder
     {
-        public void BuildGrid(Grid targetGrid, int gridSize, Style cellStyle, Style flaggedStyle, Brush textColor, float fontSize, List<Cell> cells)
+        public void BuildGrid(GridBuilderOptions<Cell> options)
         {
+            var targetGrid = options.TargetGrid;
+            var gridSize = options.GridSize;
+            var cellStyle = options.CellStyle;
+            var textColor = options.TextColor;
+            var fontSize = options.FontSize;
+
             targetGrid.Children.Clear();
             targetGrid.RowDefinitions.Clear();
             targetGrid.ColumnDefinitions.Clear();
@@ -52,7 +72,7 @@ namespace saper1.Services
                     Grid.SetColumn(cell, col);
                     targetGrid.Children.Add(cell);
                     
-                    cells.Add(new Cell(new() { X = row, Y = col}) { Border = cell });
+                    options.Content.Add(new Cell(new() { X = row, Y = col}) { Border = cell });
                 }
             }
         }

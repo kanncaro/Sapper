@@ -10,7 +10,6 @@ namespace saper1.IServices
 {
     public interface IGameLogicController
     {
-        public bool CheckWin(int gridSize, int mineCount, int visited);
-        public void RevealAllMines(List<Cell> mineMap);
+        void RevealAllMines(List<Cell> mineMap);
     }
 }

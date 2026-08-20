@@ -5,7 +5,7 @@
     <SolidColorBrush x:Key="TextForeground" Color="#0F172A"/>
     <SolidColorBrush x:Key="MainBorderBrush" Color="#475569"/>
 
-    <SolidColorBrush x:Key="PlayfieldBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="PlayfieldBackground" Color="#FFBDBDBD"/>
     <SolidColorBrush x:Key="PlayfieldHoverBackground" Color="#E2E8F0"/>
 
     <SolidColorBrush x:Key="ClosedCellBackground" Color="#CBD5E1"/>
@@ -18,7 +18,7 @@
     <SolidColorBrush x:Key="ComboBoxBorder" Color="#94A3B8"/>
 
     <CornerRadius x:Key="CellCornerRadius">8</CornerRadius>
-    <Thickness x:Key="CellBorderThickness">1</Thickness>
+    <Thickness x:Key="CellBorderThickness">2</Thickness>
 
     <Style x:Key="OpenPlayfield" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource PlayfieldBackground}"/>
@@ -41,11 +41,6 @@
                         <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
                     </Setter.Value>
                 </Setter>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect Color="#2563EB" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
-                    </Setter.Value>
-                </Setter>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -65,22 +60,12 @@
             </Setter.Value>
         </Setter>
         <Setter Property="Margin" Value="2"/>
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect Color="#334155" BlurRadius="6" ShadowDepth="3" Opacity="0.6"/>
-            </Setter.Value>
-        </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="#E2E8F0"/>
                 <Setter Property="RenderTransform">
                     <Setter.Value>
                         <ScaleTransform ScaleX="1.05" ScaleY="1.05"/>
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect Color="#1E293B" BlurRadius="10" ShadowDepth="2" Opacity="0.5"/>
                     </Setter.Value>
                 </Setter>
             </Trigger>
@@ -92,11 +77,6 @@
         <Setter Property="BorderBrush" Value="{StaticResource SelectedBorder}"/>
         <Setter Property="CornerRadius" Value="{StaticResource CellCornerRadius}"/>
         <Setter Property="BorderThickness" Value="2"/>
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect Color="#3B82F6" BlurRadius="18" ShadowDepth="0" Opacity="0.9"/>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style x:Key="RoundButton" TargetType="Button">

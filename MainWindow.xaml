@@ -6,10 +6,9 @@
         AllowsTransparency="True" WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-
         <SolidColorBrush x:Key="WindowBackground" Color="#FF2D2D30"/>
 
-        <Storyboard x:Key="RevealCellAnimation">
+        <Storyboard x:Key="RevealCellAnimation" Timeline.DesiredFrameRate="60">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
                              From="0" To="1" Duration="0:0:0.2"/>
             <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)"
@@ -18,30 +17,30 @@
                              From="0.8" To="1" Duration="0:0:0.2"/>
         </Storyboard>
 
-        <Storyboard x:Key="OpenSettingsAnimation">
+        <Storyboard x:Key="OpenSettingsAnimation" Timeline.DesiredFrameRate="60">
             <DoubleAnimation Storyboard.TargetName="SettingsPanel"
                              Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                             From="-300" To="0" Duration="0:0:0.3">
+                             To="0" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetName="Overlay"
                              Storyboard.TargetProperty="Opacity"
-                             From="0" To="1" Duration="0:0:0.3"/>
+                             To="1" Duration="0:0:0.3"/>
         </Storyboard>
 
-        <Storyboard x:Key="CloseSettingsAnimation">
+        <Storyboard x:Key="CloseSettingsAnimation" Timeline.DesiredFrameRate="60">
             <DoubleAnimation Storyboard.TargetName="SettingsPanel"
                              Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                             From="0" To="-320" Duration="0:0:0.3">
+                             To="-305" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseIn"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetName="Overlay"
                              Storyboard.TargetProperty="Opacity"
-                             From="1" To="0" Duration="0:0:0.3"/>
+                             To="0" Duration="0:0:0.3"/>
         </Storyboard>
     </Window.Resources>
 
@@ -117,7 +116,8 @@
                         Width="300"
                         Background="{DynamicResource PlayfieldBackground}"
                         CornerRadius="0,10,10,0"
-                        RenderTransformOrigin="0.5,0.5">
+                        RenderTransformOrigin="0.5,0.5"
+                        CacheMode="BitmapCache">
                     <Border.RenderTransform>
                         <TranslateTransform X="-305"/>
                     </Border.RenderTransform>

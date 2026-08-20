@@ -1,16 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿using saper1.Data;
 using saper1.Entities;
+using saper1.Extensions;
 using saper1.IServices;
 using saper1.Services;
-using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using static System.Net.Mime.MediaTypeNames;
 using Application = System.Windows.Application;
+
 
 namespace saper1
 {
@@ -19,8 +18,6 @@ namespace saper1
         private readonly ISettingsService _settingsService;
         private readonly IThemeManager _themeManager;
         private readonly IGameTimer _gameTimer;
-        private readonly IMinePlacer _minePlacer;
-        private readonly IMineCounter _mineCounter;
         private readonly IGameLogicController _gameLogic;
         private readonly IGridBuilder _gridBuilder;
 
@@ -34,36 +31,30 @@ namespace saper1
             { "Любитель", new int[]{ 15, 34 } },
             { "Професіонал", new int[]{ 20, 60 } }
         };
-        
-        private List<Cell> _cells = new List<Cell>();
-        private List<Cell> _mineMap = new List<Cell>();
+
+        private Cell[,] _cells;
+        private List<Cell> MineMap => _cells != null ? [.. _cells.Where(x => x.IsMine)] : [];
+        private GridBuilderOptions<Cell>? _gridOptions;
 
         private bool _isSettingsPanelOpen = false;
 
         public MainWindow(ISettingsService settingsService,
-            IThemeManager themeManager,
-            IGameTimer gameTimer,
-            IMinePlacer minePlacer,
-            IMineCounter mineCounter,
-            IGridBuilder gridBuilder,
-            IGameLogicController gameLogic)
+                          IThemeManager themeManager,
+                          IGameTimer gameTimer,
+                          IGridBuilder gridBuilder,
+                          IGameLogicController gameLogic)
         {
             InitializeComponent();
 
             _settingsService = settingsService;
             _themeManager = themeManager;
             _gameTimer = gameTimer;
-            _minePlacer = minePlacer;
-            _mineCounter = mineCounter;
             _gridBuilder = gridBuilder;
             _gameLogic = gameLogic;
 
-            _cells = [];
-            _mineMap = [];
 
-            _settingsService.Load();
             ApplySettings();
-            BuildGrid();
+
 
             _gameTimer.TimeChanged += (min, sec) =>
             {
@@ -74,32 +65,62 @@ namespace saper1
             (Resources["MainAnimation"] as Storyboard)?.Begin(Main);
         }
 
+
+        private void InitializeCells()
+        {
+            _cells = new Cell[_gridSize, _gridSize];
+
+            for (int i = 0; i < _gridSize; i++)
+            {
+                for (int j = 0; j < _gridSize; j++)
+                {
+                    _cells[i, j] = new Cell(new Coordinates { X = i, Y = j })
+                    {
+                        IsOpen = false,
+                        IsFlagged = false,
+                        IsMine = false,
+                        AdjacentMines = 0,
+                        Border = null,
+                    };
+                }
+            }
+        }
+
         private void ApplySettings()
         {
+            _settingsService.Load();
+
             _gridSize = difficultyConfig[_settingsService.SettingsData.Difficulty][0];
             _minesNeeded = difficultyConfig[_settingsService.SettingsData.Difficulty][1];
 
             difficultyComboBox.SelectedItem = difficultyComboBox.Items
                 .Cast<ComboBoxItem>()
                 .FirstOrDefault(item => item.Content.ToString() == _settingsService.SettingsData.Difficulty);
-            
+
             themeComboBox.SelectedItem = themeComboBox.Items
                 .Cast<ComboBoxItem>()
                 .FirstOrDefault(item => item.Content.ToString() == _settingsService.SettingsData.Theme);
-            
+
             _themeManager.ApplyTheme(_settingsService.SettingsData.Theme, Resources);
 
-            foreach (var c in _cells.Where(x => x.IsOpen))
+            InitializeCells();
+
+            if (_cells != null)
             {
-                c.Border.Background = _themeManager.OpenedCellBrush;
+                foreach (var c in _cells.Where(x => x.IsOpen))
+                {
+                    c.Border.Background = _themeManager.OpenedCellBrush;
+                }
             }
+
+            BuildGrid();
         }
 
         private void BuildGrid()
         {
             float fontSize = (float)Math.Max(12, 500.0 / _gridSize * 0.4);
 
-            GridBuilderOptions<Cell> options = new(playField, _cells)
+            _gridOptions = new GridBuilderOptions<Cell>(playField, _cells)
             {
                 GridSize = _gridSize,
                 CellStyle = (Style)FindResource("Playfield"),
@@ -108,15 +129,15 @@ namespace saper1
                 FontSize = fontSize
             };
 
-           _gridBuilder.BuildGrid(options);
+            _gridBuilder.BuildGrid(_gridOptions);
 
-           _cells.ForEach(cell =>
-           {
-               cell.Border.MouseLeftButtonDown += Cell_LeftClick;
-               cell.Border.MouseRightButtonDown += Cell_RightClick;
-           });
+            _cells.ForEach(cell =>
+            {
+                cell.Border.MouseLeftButtonDown += Cell_LeftClick;
+                cell.Border.MouseRightButtonDown += Cell_RightClick;
+            });
         }
-        
+
         private bool _gameStarted;
 
         private void Cell_LeftClick(object sender, MouseButtonEventArgs e)
@@ -124,14 +145,14 @@ namespace saper1
             if (sender is not Border cell) return;
             int row = Grid.GetRow(cell), col = Grid.GetColumn(cell);
 
-            var properCell = _cells.FirstOrDefault(x => x.Coordinates.X == row && x.Coordinates.Y == col)!;
+            var properCell = _cells[row, col];
+
             if (properCell.IsOpen || properCell.IsFlagged) return;
 
             if (!_gameStarted)
             {
-                _minePlacer.PlaceMines(_gridSize, _minesNeeded, row, col, _cells);
-                _mineMap = [.. _cells.Where(c => c.IsMine)];
-                _mineCounter.CountAllMines(_gridSize, _cells);
+                _gridBuilder.PlaceMines(_gridOptions, _minesNeeded, row, col);
+                _gridBuilder.CountMines(_gridOptions);
                 _gameTimer.Reset();
                 _gameTimer.Start();
                 RevealRecursive(row, col);
@@ -139,19 +160,20 @@ namespace saper1
                 return;
             }
 
-            var potentionalCell = _cells.FirstOrDefault(x => x.Coordinates!.X == row && x.Coordinates.Y == col);
+            var potentionalCell = _cells[row, col];
+
             bool IsMine = potentionalCell!.IsMine;
-            
+
             if (IsMine)
             {
-                if(potentionalCell.Border.Child is TextBlock block)
+                if (potentionalCell.Border.Child is TextBlock block)
                 {
                     block.Visibility = Visibility.Visible;
                     block.Background = Brushes.Red;
                     potentionalCell.Border.Background = _themeManager.OpenedCellBrush;
                     potentionalCell.IsOpen = true;
                 }
-                _gameLogic.RevealAllMines(_mineMap);
+                _gameLogic.RevealAllMines(MineMap);
                 _gameTimer.Stop();
                 MessageBox.Show("Game over!");
                 Refresh();
@@ -160,7 +182,7 @@ namespace saper1
             {
                 RevealRecursive(row, col);
 
-                if ( (GridSquare - _mineMap.Count) == _cells.Where(x => x.IsFlagged || x.IsOpen).Count())
+                if ((GridSquare - MineMap.Count) == _cells.Where(x => x.IsOpen).Count())
                 {
                     _gameTimer.Stop();
                     MessageBox.Show("You win!");
@@ -175,7 +197,7 @@ namespace saper1
             int row = Grid.GetRow(cell), col = Grid.GetColumn(cell);
             if (!_gameStarted || cell.Background == _themeManager.OpenedCellBrush) return;
 
-            var current = _cells.FirstOrDefault(x => x.Coordinates.X == row && x.Coordinates.Y == col);
+            var current = _cells[row, col];
             if (current!.IsFlagged)
             {
                 cell.Style = (Style)FindResource("Playfield");
@@ -252,19 +274,26 @@ namespace saper1
                 _isSettingsPanelOpen = true;
             }
         }
-        
+
         private void Refresh()
         {
             _gameStarted = false;
             _gameTimer.Reset();
-            _mineMap.Clear();
-            _cells.Clear();
+            _gameTimer.Stop();
+
+            _cells.ForEach(cell =>
+            {
+                cell.IsOpen = false;
+                cell.IsFlagged = false;
+                cell.IsMine = false;
+                cell.AdjacentMines = 0;
+            });
+
             BuildGrid();
         }
 
         private void CloseSettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!_isSettingsPanelOpen) return;
             if (FindResource("CloseSettingsAnimation") is Storyboard closeAnimation)
             {
                 closeAnimation.Completed += (s, _) => Overlay.Visibility = Visibility.Collapsed;
@@ -277,15 +306,19 @@ namespace saper1
         {
             try
             {
+                var newDifficulty = (difficultyComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
+                var newTheme = (themeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
+
                 _settingsService.Save(
                                 new()
                                 {
-                                    Difficulty = (difficultyComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!,
-                                    Theme = (themeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString()!
+                                    Difficulty = newDifficulty,
+                                    Theme = newTheme
                                 });
 
                 ApplySettings();
                 Refresh();
+
                 CloseSettingsButton_Click(sender, e);
             }
             catch (Exception ex)

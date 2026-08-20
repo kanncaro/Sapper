@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using saper1.Data;
+﻿using saper1.Data;
 
 namespace saper1.IServices
 {

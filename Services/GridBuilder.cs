@@ -1,34 +1,46 @@
-﻿using saper1.Data;
 using saper1.Entities;
 using saper1.IServices;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace saper1.Services
 {
-
-    public class GridBuilderOptions<T>(Grid target, ICollection<T> content)
-    { 
-        public Grid TargetGrid { get; } = target;
-        public ICollection<T> Content { get; } = content;
-
+    public class GridBuilderOptions<T>
+    {
+        public Grid TargetGrid { get; }
+        public T[,] Content;
 
         public int GridSize { get; set; } = 10;
         public Style CellStyle { get; set; } = null!;
         public Style FlaggedStyle { get; set; } = null!;
         public Brush TextColor { get; set; } = Brushes.Black;
         public float FontSize { get; set; } = 12f;
+
+        public GridBuilderOptions(Grid target, T[,] content)
+        {
+            TargetGrid = target;
+            Content = content;
+        }
     }
 
     public class GridBuilder : IGridBuilder
     {
+        private readonly IMineCounter _mineCounter;
+        private readonly IMinePlacer _minePlacer;
+
+        public GridBuilder(IMinePlacer minePlacer, IMineCounter mineCounter)
+        {
+            _minePlacer = minePlacer;
+            _mineCounter = mineCounter;
+        }
+
         public void BuildGrid(GridBuilderOptions<Cell> options)
+        {
+            BuildGridVisuals(options);
+        }
+
+        public void BuildGridVisuals(GridBuilderOptions<Cell> options)
         {
             var targetGrid = options.TargetGrid;
             var gridSize = options.GridSize;
@@ -71,10 +83,24 @@ namespace saper1.Services
                     Grid.SetRow(cell, row);
                     Grid.SetColumn(cell, col);
                     targetGrid.Children.Add(cell);
-                    
-                    options.Content.Add(new Cell(new() { X = row, Y = col}) { Border = cell });
+
+                    var target = options.Content[row, col];
+
+                    target.Coordinates.X = row;
+                    target.Coordinates.Y = col;
+                    target.Border = cell;
                 }
             }
+        }
+
+        public void PlaceMines(GridBuilderOptions<Cell> options, int mineCount, int safeRow, int safeCol)
+        {
+            _minePlacer.PlaceMines(options.GridSize, mineCount, safeRow, safeCol, ref options.Content);
+        }
+
+        public void CountMines(GridBuilderOptions<Cell> options)
+        {
+            _mineCounter.CountAllMines(ref options.Content);
         }
     }
 }

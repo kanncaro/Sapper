@@ -1,12 +1,7 @@
 ﻿using Newtonsoft.Json;
 using saper1.Data;
 using saper1.IServices;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace saper1.Services
 {
@@ -15,7 +10,7 @@ namespace saper1.Services
         private const string FileName = "myconfig.json";
         private readonly string _settingsDirectory;
         private readonly string _settingsFilePath;
-        public SettingsData SettingsData { get; set; } = new(){Theme = "Темна", Difficulty = "Любитель"};
+        public SettingsData SettingsData { get; set; } = new() { Theme = "Темна", Difficulty = "Новачок" };
 
 
         public SettingsService()
@@ -35,7 +30,6 @@ namespace saper1.Services
                 {
                     var json = File.ReadAllText(_settingsFilePath);
                     SettingsData = JsonConvert.DeserializeObject<SettingsData>(json)!;
-                    
                 }
             }
             catch (Exception ex)

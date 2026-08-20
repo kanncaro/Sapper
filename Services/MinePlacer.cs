@@ -6,9 +6,9 @@ namespace saper1.Services
 {
     internal class MinePlacer : IMinePlacer
     {
-        private Random _rand = new();
+        private static readonly Random _rand = new();
 
-        public void PlaceMines(int gridSize, int minesNeeded, int safeRow, int safeCol, List<Cell> texts)
+        public void PlaceMines(int gridSize, int minesNeeded, int safeRow, int safeCol, ref Cell[,] texts)
         {
             var availablePositions = new List<(int, int)>();
 
@@ -29,7 +29,8 @@ namespace saper1.Services
             {
                 var (i, j) = shuffled[k];
 
-                var cell = texts.FirstOrDefault(c => c.Coordinates!.X == i && c.Coordinates.Y == j);
+                var cell = texts[i, j];
+
                 if (cell != null)
                 {
                     cell.IsMine = true;

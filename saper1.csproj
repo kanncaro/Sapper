@@ -7,6 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>land-mine.ico</ApplicationIcon>
+    <AssemblyTitle>Minesweeper</AssemblyTitle>
+    <AssemblyName>Minesweeper</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

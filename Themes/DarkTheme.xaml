@@ -47,6 +47,11 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Backwards-compatible aliases so both themes expose the same keys -->
+    <Style x:Key="OpenPlayfield" TargetType="Border" BasedOn="{StaticResource Playfield}" />
+    <Style x:Key="ClosedPlayfield" TargetType="Border" BasedOn="{StaticResource Playfield}" />
+
+
     <!-- Стиль для помеченной ячейки -->
     <Style x:Key="selectedSquare" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource SelectedBackground}"/>

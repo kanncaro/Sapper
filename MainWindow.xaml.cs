@@ -65,6 +65,26 @@ namespace saper1
             (Resources["MainAnimation"] as Storyboard)?.Begin(Main);
         }
 
+        // Safe resource lookup helpers: try candidate keys in order and return a sensible fallback
+        private Style GetStyleResource(params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                var res = TryFindResource(key);
+                if (res is Style s) return s;
+            }
+
+            // Last-resort: return an empty style for Border so usage won't throw
+            return new Style(typeof(Border));
+        }
+
+        private Brush GetBrushResource(string key, Brush fallback)
+        {
+            var res = TryFindResource(key);
+            if (res is Brush b) return b;
+            return fallback;
+        }
+
 
         private void InitializeCells()
         {
@@ -123,9 +143,9 @@ namespace saper1
             _gridOptions = new GridBuilderOptions<Cell>(playField, _cells)
             {
                 GridSize = _gridSize,
-                CellStyle = (Style)FindResource("Playfield"),
-                FlaggedStyle = (Style)FindResource("selectedSquare"),
-                TextColor = (Brush)FindResource("TextForeground"),
+                CellStyle = GetStyleResource("Playfield", "ClosedPlayfield", "OpenPlayfield"),
+                FlaggedStyle = GetStyleResource("selectedSquare"),
+                TextColor = GetBrushResource("TextForeground", Brushes.Black),
                 FontSize = fontSize
             };
 
@@ -200,12 +220,12 @@ namespace saper1
             var current = _cells[row, col];
             if (current!.IsFlagged)
             {
-                cell.Style = (Style)FindResource("Playfield");
+                cell.Style = GetStyleResource("Playfield", "ClosedPlayfield", "OpenPlayfield");
                 current.IsFlagged = false;
             }
             else
             {
-                cell.Style = (Style)FindResource("selectedSquare");
+                cell.Style = GetStyleResource("selectedSquare");
                 current.IsFlagged = true;
             }
         }
@@ -226,7 +246,7 @@ namespace saper1
                 text.Text = cell.AdjacentMines == 0 ? " " : cell.AdjacentMines.ToString();
             }
 
-            if (FindResource("RevealCellAnimation") is Storyboard revealAnim)
+            if (TryFindResource("RevealCellAnimation") is Storyboard revealAnim)
             {
                 Storyboard.SetTarget(revealAnim, cell.Border);
                 revealAnim.Begin();
@@ -267,7 +287,7 @@ namespace saper1
         private void OpenSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isSettingsPanelOpen) return;
-            if (FindResource("OpenSettingsAnimation") is Storyboard openAnimation)
+            if (TryFindResource("OpenSettingsAnimation") is Storyboard openAnimation)
             {
                 Overlay.Visibility = Visibility.Visible;
                 openAnimation.Begin(this);
@@ -294,7 +314,7 @@ namespace saper1
 
         private void CloseSettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (FindResource("CloseSettingsAnimation") is Storyboard closeAnimation)
+            if (TryFindResource("CloseSettingsAnimation") is Storyboard closeAnimation)
             {
                 closeAnimation.Completed += (s, _) => Overlay.Visibility = Visibility.Collapsed;
                 closeAnimation.Begin(this);
